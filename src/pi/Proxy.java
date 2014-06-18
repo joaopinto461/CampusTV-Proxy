@@ -36,14 +36,14 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 			if(clientCommunication())
 				return true;
 			else{
-				System.out.println("Comunicação nao completa");
+				System.out.println("Comunicacao nao completa");
 				return true;
 			}
 		}
 		else
 			return false;
 	}
-	
+
 
 	// Vai buscar o json ao servidor e faz download do youtube os videos a transmitir para os clientes
 	private boolean readJsonFromUrl(String url) throws IOException{
@@ -81,14 +81,19 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 			{
 				videoURL = json.getString("video");
 				id = String.valueOf(json.get("id"));
-				String command = "python";
-				String pathToScript = "/Users/joaopinto/Documents/videosPython/get_videos.py";
-				System.out.println(command + " " + pathToScript + " " + videoURL + " " + id);
-				String output1 = executeCommand(command + " " + pathToScript + " " + videoURL + " " + id);
-				System.out.println("OUTPUT: " + output1);
-			}
-			else{
-				System.out.println("Conteudo sem video");
+				String[] cmd = new String[4];
+				cmd[0] = "python";
+				cmd[1] = "/Users/joaopinto/Documents/videosPython/get_videos.py";
+				cmd[2] = videoURL;
+				cmd[3] = id;
+				//				String command = "python";
+				//				String pathToScript = "/Users/joaopinto/Documents/videosPython/get_videos.py";
+				//				System.out.println(command + " " + pathToScript + " " + videoURL + " " + id);
+				//String output1 = executeCommand(command + " " + pathToScript + " " + videoURL + " " + id);
+				//String output1 = executeCommand(cmd);
+				//System.out.println("OUTPUT: " + output1);
+				executeCommand(cmd);
+				return true;
 			}
 
 		} catch (Exception e) {
@@ -101,27 +106,27 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 	}
 
 	// Executa o comando de python na consola para fazer o download dos videos
-	private String executeCommand(String command) {
+	private void executeCommand(String[] command) {
 
-		StringBuffer output = new StringBuffer();
+		//StringBuffer output = new StringBuffer();
 
 		Process p;
 		try {
 			p = Runtime.getRuntime().exec(command);
 			//p.waitFor();
-			BufferedReader reader = 
-					new BufferedReader(new InputStreamReader(p.getInputStream()));
+//			BufferedReader reader = 
+//					new BufferedReader(new InputStreamReader(p.getInputStream()));
 
-			String line = "";			
-			while ((line = reader.readLine())!= null) {
-				output.append(line + "\n");
-			}	
+//			String line = "";			
+//			while ((line = reader.readLine())!= null) {
+//				output.append(line + "\n");
+//			}	
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		return output.toString();
+		//return output.toString();
 
 	}
 
@@ -138,7 +143,6 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 			System.out.println("Erro ao copiar o ficheiro. Nao encontrado");
 			return null;
 		}
-		
 	}
 
 	// Lista a directoria
@@ -152,43 +156,39 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 
 	public boolean clientCommunication() throws RemoteException{
 
-		Iterator<String> it = serversListIP.keySet().iterator();
-		while(it.hasNext()){
-			String serverName = it.next();
-			String ip = serversListIP.get(serverName);
-
-			try 
-			{
-				ITVClient client = (ITVClient) Naming.lookup("//" + ip + "/" + serverName);
-				client.receiveJson(json);
-				String[] tmp = dir("videos");
-				byte[] file;
-				for(int i = 0; i<tmp.length; i++)
+		if(!serversListIP.isEmpty()){
+			Iterator<String> it = serversListIP.keySet().iterator();
+			while(it.hasNext()){
+				String serverName = it.next();
+				String ip = serversListIP.get(serverName);
+				System.out.println(serverName);
+				System.out.println(ip);
+				ITVClient client;
+				try 
 				{
-					file = copyFile("videos/" + tmp[i]);
-					client.pasteFile(file, "videos_client/" + tmp[i]);
-				}
-				return true;
-			} catch (Exception e) 
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return false;
-			} 
+					client = (ITVClient) Naming.lookup("//" + ip + "/" + serverName);
+					//client.receiveJson(json);
+					//client.a();
+//					String[] tmp = dir("videos");
+//					byte[] file;
+//					for(int i = 0; i<tmp.length; i++)
+//					{
+//						System.out.println(tmp[i]);
+//						file = copyFile("videos/" + tmp[i]);
+//						client.pasteFile(file, "videos_client/" + tmp[i]);
+//					}
+					return true;
+				} 
+				catch (Exception e) 
+				{
+					e.printStackTrace();
+					return false;
+				} 
+			}
 		}
 		return true;
 
 	}
-	
-	// Metodo executado de x em x tempo
-	private TimerTask resetContents() throws IOException{
-		
-		readJsonFromUrl("http://localhost:3000/contents.json");
-		clientCommunication();
-		return null;	
-	}
-
-
 
 	public static void main(String[] args) throws Exception {
 
@@ -211,13 +211,24 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 			// do nothing - already started with rmiregistry
 		}
 
-		Proxy proxy = new Proxy();
+		final Proxy proxy = new Proxy();
 		Naming.rebind("/trabalhoPI", proxy);
 		String ip = InetAddress.getLocalHost().getHostAddress().toString();
 		System.out.println( "Proxy running in " + ip + " ...");	
-		
+
 		Timer timer = new Timer();
-		timer.scheduleAtFixedRate(proxy.resetContents(), 0, 1000*60*60);
+		timer.scheduleAtFixedRate(new TimerTask(){
+			public void run(){
+				
+				try {
+					proxy.readJsonFromUrl("http://localhost:3000/contents.json");
+					proxy.clientCommunication();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			}, 0, 1000*60*60);
 
 	}
 

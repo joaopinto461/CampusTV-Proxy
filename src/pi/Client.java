@@ -47,8 +47,30 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 		}		
 	}
 	
-	public void receiveJson(JSONArray jarray){
+	public void receiveJson(JSONArray jarray) throws IOException{
+		
 		this.array = jarray;
+//		String fName = "data.js";
+//		File file = new File(fName);
+//		
+//		if(!file.exists())
+//			file.createNewFile();
+//	
+//		FileOutputStream fop = new FileOutputStream(file);
+//		
+//		String content = array.toString();
+//		byte[] contentInBytes = content.getBytes();
+//		 
+//		fop.write(contentInBytes);
+//		fop.flush();
+//		fop.close();
+		
+		
+	}
+	
+	public boolean a() throws RemoteException{
+		System.out.println("BLAAAAA");
+		return true;
 	}
 	
 	public boolean pasteFile(byte[] f, String toPath)
@@ -83,13 +105,10 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 		String serverName = args[0];	
 		String ip = InetAddress.getLocalHost().getHostAddress().toString();
 		String proxyURL = args[1];
-		System.out.println(serverName);
-		System.out.println(ip);
-		System.out.println(proxyURL);
+		
 		try{
 			
 		ITVClient client = new Client(serverName, proxyURL, ip);
-		System.out.println("entrei");
 		Naming.rebind("/" + serverName, client);
 		} 
 		catch(Exception e)
