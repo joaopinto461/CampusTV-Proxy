@@ -6,7 +6,6 @@ import java.rmi.RemoteException;
 
 import org.json.*;
 
-
 public interface ITVClient extends Remote {
 
 	

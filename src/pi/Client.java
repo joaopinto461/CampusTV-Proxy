@@ -28,6 +28,7 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 	}
 	
 	
+	
 	public static void register (String serverName, String proxyURL, String ip)
 	{
 		IProxy server;

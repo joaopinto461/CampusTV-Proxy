@@ -138,6 +138,7 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 			System.out.println("Erro ao copiar o ficheiro. Nao encontrado");
 			return null;
 		}
+		
 	}
 
 	// Lista a directoria
