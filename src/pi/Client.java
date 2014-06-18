@@ -1,22 +1,30 @@
 package pi;
+
 import java.io.*;
+
+import org.json.*;
+
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.rmi.*;
 import java.rmi.registry.*;
 import java.rmi.server.UnicastRemoteObject;
 
 public class Client extends UnicastRemoteObject implements ITVClient{
 	
+	
+	private static final long serialVersionUID = 1L;
 	private static String basePath = ".";
 	private String serverName;
 	private String proxyURL;
 	private String ip;
+	private JSONArray array;
 	
 	public Client(String serverName, String proxyURL, String ip) throws RemoteException{
-		super();
 		this.serverName = serverName;
 		this.proxyURL = proxyURL;
 		this.ip = ip;
+		array = null;
 	}
 	
 	
@@ -36,6 +44,10 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 			System.out.println("Contact Server nao encontrado no endereco fornecido");
 			System.exit(0);
 		}		
+	}
+	
+	public void receiveJson(JSONArray jarray){
+		this.array = jarray;
 	}
 	
 	public boolean pasteFile(byte[] f, String toPath)
@@ -70,14 +82,18 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 		String serverName = args[0];	
 		String ip = InetAddress.getLocalHost().getHostAddress().toString();
 		String proxyURL = args[1];
-		
+		System.out.println(serverName);
+		System.out.println(ip);
+		System.out.println(proxyURL);
 		try{
 			
 		ITVClient client = new Client(serverName, proxyURL, ip);
+		System.out.println("entrei");
 		Naming.rebind("/" + serverName, client);
 		} 
 		catch(Exception e)
 		{
+			e.printStackTrace();
 			System.out.println("Erro ao criar Client");
 			System.exit(0);
 		}
