@@ -47,30 +47,22 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 		}		
 	}
 	
-	public void receiveJson(JSONArray jarray) throws IOException{
+	public void receiveJson(String jarray) throws IOException, RemoteException{
 		
-		this.array = jarray;
-//		String fName = "data.js";
-//		File file = new File(fName);
-//		
-//		if(!file.exists())
-//			file.createNewFile();
-//	
-//		FileOutputStream fop = new FileOutputStream(file);
-//		
-//		String content = array.toString();
-//		byte[] contentInBytes = content.getBytes();
-//		 
-//		fop.write(contentInBytes);
-//		fop.flush();
-//		fop.close();
+		String fName = "data.js";
+		File file = new File(fName);
 		
-		
-	}
+		if(!file.exists())
+			file.createNewFile();
 	
-	public boolean a() throws RemoteException{
-		System.out.println("BLAAAAA");
-		return true;
+		FileOutputStream fop = new FileOutputStream(file);
+		
+		String content = "var data = " + jarray + ";";
+		byte[] contentInBytes = content.getBytes();
+		 
+		fop.write(contentInBytes);
+		fop.flush();
+		fop.close();	
 	}
 	
 	public boolean pasteFile(byte[] f, String toPath)

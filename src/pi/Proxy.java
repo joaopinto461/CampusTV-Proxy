@@ -161,22 +161,19 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 			while(it.hasNext()){
 				String serverName = it.next();
 				String ip = serversListIP.get(serverName);
-				System.out.println(serverName);
-				System.out.println(ip);
+				
 				ITVClient client;
 				try 
 				{
 					client = (ITVClient) Naming.lookup("//" + ip + "/" + serverName);
-					//client.receiveJson(json);
-					//client.a();
-//					String[] tmp = dir("videos");
-//					byte[] file;
-//					for(int i = 0; i<tmp.length; i++)
-//					{
-//						System.out.println(tmp[i]);
-//						file = copyFile("videos/" + tmp[i]);
-//						client.pasteFile(file, "videos_client/" + tmp[i]);
-//					}
+					client.receiveJson(json.toString());
+					String[] tmp = dir("videos");
+					byte[] file;
+					for(int i = 0; i<tmp.length; i++)
+					{
+						file = copyFile("videos/" + tmp[i]);
+						client.pasteFile(file, "videos_client/" + tmp[i]);
+					}
 					return true;
 				} 
 				catch (Exception e) 
