@@ -162,8 +162,29 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 		File f = new File(new File(basePath), dir);
 		if(f.exists())
 			return f.list();
-		else
-			throw new InfoNotFoundException("Directoria nao encontrada: " + dir);
+		else{
+			f.mkdir();
+			return f.list();
+		}
+	}
+	
+	private String jsonConverter() throws JSONException, RemoteException, InfoNotFoundException{
+		
+		JSONArray tmp = json;
+		
+		for(int i = 0; i< tmp.length(); i++){
+			JSONObject j = (JSONObject) tmp.get(i);
+			if(j.get("video") != null || j.get("video") != ""){
+				String[] dir = dir("videos");
+				for(int x = 0; x< dir.length; x++){
+					if(dir[x].contains(j.get("id").toString())){
+						j.put("video", dir[x]);
+					}
+				}
+			}
+		}
+		
+		return tmp.toString();
 	}
 
 	private boolean clientCommunication() throws RemoteException{
@@ -178,7 +199,8 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 				try 
 				{
 					client = (ITVClient) Naming.lookup("//" + ip + "/" + serverName);
-					client.receiveJson(json.toString());
+					client.receiveJson(jsonConverter());
+					//client.receiveJson(json.toString());
 					String[] tmp = dir("videos");
 					byte[] file;
 					for(int i = 0; i<tmp.length; i++)

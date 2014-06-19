@@ -42,7 +42,7 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 		} 
 		catch (Exception e) 
 		{
-			System.out.println("Contact Server nao encontrado no endereco fornecido");
+			System.out.println("Proxy nao encontrado no endereco fornecido");
 			System.exit(0);
 		}		
 	}
@@ -63,20 +63,19 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 		fop.write(contentInBytes);
 		fop.flush();
 		fop.close();
-		
+
 		cleanDir("videos_client");
 
 	}
 
 
 	private void cleanDir(String dir) throws RemoteException, InfoNotFoundException{
+			String[] tmp = dir("videos_client");
 
-		String[] tmp = dir("videos");
-
-		for(int i = 0; i< tmp.length; i++){
-			File file = new File(tmp[i]);
-			file.delete();
-		}
+			for(int i = 0; i< tmp.length; i++){
+				File file = new File(tmp[i]);
+				file.delete();
+			}
 	}
 
 	// Lista a directoria
@@ -84,8 +83,10 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 		File f = new File(new File(basePath), dir);
 		if(f.exists())
 			return f.list();
-		else
-			throw new InfoNotFoundException("Directoria nao encontrada: " + dir);
+		else{
+			f.mkdir();
+			return f.list();
+		}
 	}
 
 	public boolean pasteFile(byte[] f, String toPath)
