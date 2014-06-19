@@ -9,7 +9,7 @@ import org.json.*;
 public interface ITVClient extends Remote {
 
 	
-	public void receiveJson(String array) throws RemoteException, IOException;
+	public void receiveJson(String array) throws RemoteException, IOException, InfoNotFoundException;
 	
 	public boolean pasteFile(byte[] f, String toPath)
 			throws RemoteException, IOException;

@@ -57,6 +57,7 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 		while ((jsonText = in.readLine()) != null) {
 			try {
 				json = new JSONArray(jsonText);
+				cleanDir("videos");
 				for(int i = 0; i < json.length(); i++){
 					jsobject = json.getJSONObject(i);
 					downloadVideo(jsobject);	
@@ -70,9 +71,19 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 		return done;
 
 	}
+	
+	private void cleanDir(String dir) throws RemoteException, InfoNotFoundException{
+		
+		String[] tmp = dir("videos");
+		
+		for(int i = 0; i< tmp.length; i++){
+			File file = new File(tmp[i]);
+			file.delete();
+		}
+	}
 
 	// Faz download dos videos do youtube
-	public boolean downloadVideo(JSONObject json) throws JSONException{
+	private boolean downloadVideo(JSONObject json) throws JSONException{
 
 		String videoURL = null;
 		String id = null;
@@ -100,6 +111,7 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 			// TODO Auto-generated catch block
 			System.out.println("Erro a fazer download");
 			e.printStackTrace();
+			return false;
 		}
 
 		return false;	
@@ -130,7 +142,7 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 
 	}
 
-	public byte[] copyFile(String fromPath)
+	private byte[] copyFile(String fromPath)
 			throws IOException {
 		try {
 			File f = new File(basePath, fromPath);
@@ -154,7 +166,7 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 			throw new InfoNotFoundException("Directoria nao encontrada: " + dir);
 	}
 
-	public boolean clientCommunication() throws RemoteException{
+	private boolean clientCommunication() throws RemoteException{
 
 		if(!serversListIP.isEmpty()){
 			Iterator<String> it = serversListIP.keySet().iterator();
