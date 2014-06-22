@@ -58,9 +58,11 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 			try {
 				json = new JSONArray(jsonText);
 				cleanDir("videos");
+				System.out.println("bla");
 				for(int i = 0; i < json.length(); i++){
 					jsobject = json.getJSONObject(i);
-					downloadVideo(jsobject);	
+					if(jsobject.get("video") != null || jsobject.get("video") != "")
+						downloadVideo(jsobject);	
 				}
 				done = true;
 			} catch (Exception e) {
@@ -88,9 +90,9 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 		String videoURL = null;
 		String id = null;
 		try {
-			if(json.getString("video").contains("http"))
-			{
-				videoURL = json.getString("video");
+//			if(json.get("video").contains("http"))
+//			{
+				videoURL = String.valueOf(json.get("video"));
 				id = String.valueOf(json.get("id"));
 				String[] cmd = new String[4];
 				cmd[0] = "python";
@@ -105,7 +107,7 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 				//System.out.println("OUTPUT: " + output1);
 				executeCommand(cmd);
 				return true;
-			}
+//			}
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -114,7 +116,7 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 			return false;
 		}
 
-		return false;	
+//		return false;	
 	}
 
 	// Executa o comando de python na consola para fazer o download dos videos
