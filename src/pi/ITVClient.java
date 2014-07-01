@@ -14,7 +14,7 @@ public interface ITVClient extends Remote {
 	public boolean pasteFile(byte[] f, String toPath)
 			throws RemoteException, IOException;
 	
-	
+	public void cleanVideoFromDir(String video) throws RemoteException, InfoNotFoundException;
 	
 	
 }

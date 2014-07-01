@@ -62,23 +62,19 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 			} finally {
 			    out.close();
 			}
-		cleanDir("videos_client");
 
 	}
+	
+	public void cleanVideoFromDir(String video) throws RemoteException, InfoNotFoundException{
 
-
-	private void cleanDir(String dir) throws RemoteException, InfoNotFoundException{
-			String[] tmp = dir("videos_client");
-
-			for(int i = 0; i< tmp.length; i++){
-				File file = new File("videos_client/" + tmp[i]);
-				file.delete();
-			}
+		File file = new File("videos_client/" + video);
+		file.delete();
 	}
 
 	// Lista a directoria
 	private String[] dir(String dir) throws RemoteException, InfoNotFoundException {
 		File f = new File(new File(basePath), dir);
+		
 		if(f.exists())
 			return f.list();
 		else{
@@ -90,6 +86,7 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 	public boolean pasteFile(byte[] f, String toPath)
 			throws RemoteException, IOException {
 		try{
+			dir("videos_client");
 			File file = new File(basePath, toPath);
 			OutputStream out = new FileOutputStream(file);
 			out.write(f);
