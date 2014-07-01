@@ -20,7 +20,6 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 	private static final long serialVersionUID = 1L;
 	private static String basePath = ".";
 	private Map<String, String> serversListIP;
-	private Map<String,String> replace;
 	private JSONArray json;
 	private String jsonText;
 
@@ -65,7 +64,8 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 		try {
 			jsonText = in.readLine();
 			json = new JSONArray(jsonText);
-			for(int i = 0; i < json.length(); i++){
+			for(int i = 0; i < json.length(); i++)
+			{
 				jsobject = json.getJSONObject(i);
 
 				if(jsobject.get("video") != null || jsobject.get("video") != ""){
@@ -97,18 +97,20 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 
 private void verifyVideos() throws RemoteException, InfoNotFoundException, JSONException{
 
-	//		String[] tmp = dir("videos");
-	//		for(int j = 0; j < tmp.length; j++ ){
-	//			String[] split = tmp[j].split("\\.(?=[^\\.]+$)");
-	//			boolean found = false;
-	//			for(int i = 0; i< json.length(); i++){
-	//				if(split[0].equals(json.getJSONObject(i).get("id")))
-	//					found = true;
-	//			}
-	//			if(!found)
-	//				cleanVideoFromDir(tmp[j]);
-	//
-	//		}
+			String[] tmp = dir("videos");
+			for(int j = 0; j < tmp.length; j++ ){
+				String[] split = tmp[j].split("\\.(?=[^\\.]+$)");
+				boolean found = false;
+				for(int i = 0; i< json.length(); i++){
+					if(split[0].equals(String.valueOf(json.getJSONObject(i).get("id")))){
+						if(json.getJSONObject(i).get("video") != null)
+							found = true;
+					}
+				}
+				if(!found)
+					cleanVideoFromDir(tmp[j]);
+	
+			}
 }
 
 private void cleanVideoFromDir(String video) throws RemoteException, InfoNotFoundException{
@@ -150,25 +152,13 @@ private boolean downloadVideo(JSONObject json) throws JSONException{
 // Executa o comando de python na consola para fazer o download dos videos
 private void executeCommand(String[] command) {
 
-	//StringBuffer output = new StringBuffer();
-
 	Process p;
 	try {
 		p = Runtime.getRuntime().exec(command);
-		//p.waitFor();
-		//			BufferedReader reader = 
-		//					new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-		//			String line = "";			
-		//			while ((line = reader.readLine())!= null) {
-		//				output.append(line + "\n");
-		//			}	
 
 	} catch (Exception e) {
 		e.printStackTrace();
 	}
-
-	//return output.toString();
 
 }
 
@@ -208,21 +198,11 @@ private String stringConverter() throws JSONException, RemoteException, InfoNotF
 			String[] dir = dir("videos");
 			for(int x = 0; x< dir.length; x++){
 				String[] split = dir[x].split("\\.(?=[^\\.]+$)");
-				if(split[0].equals(String.valueOf(j.get("id")))){
+				if(split[0].equals(String.valueOf(j.get("id"))))
 					result = result.replace(String.valueOf(j.get("video")), dir[x]);
-					
-				}
 			}
 		}
 	}
-
-	//		Iterator<String> it = replace.keySet().iterator();
-	//		
-	//		while(it.hasNext()){
-	//			String fileName = it.next();
-	//			String url = replace.get(fileName);
-	//			tmp.replaceAll(url, fileName);
-	//		}
 	return result;
 }
 
@@ -283,7 +263,7 @@ public static void main(String[] args) throws Exception {
 	final Proxy proxy = new Proxy();
 	Naming.rebind("/trabalhoPI", proxy);
 	String ip = InetAddress.getLocalHost().getHostAddress().toString();
-	System.out.println( "Proxy running in " + ip + " ...");	
+	System.out.println("Proxy running in " + ip + " ...");	
 
 	Timer timer = new Timer();
 	timer.scheduleAtFixedRate(new TimerTask(){

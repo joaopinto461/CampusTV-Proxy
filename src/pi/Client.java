@@ -57,32 +57,11 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 		Writer out = new BufferedWriter(new OutputStreamWriter(
 			    new FileOutputStream(fName), "UTF-8"));
 			try {
-				String content = "var data = " + jarray + ";";
+				String content = "var data = " + jarray + ";" + "\n" + "var server = " + "\"" +  proxyURL + "\"" + ";";
 			    out.write(content);
 			} finally {
 			    out.close();
 			}
-//		FileOutputStream fop = new FileOutputStream(file,"UTF-8");
-//		try {
-//		JSONArray js = new JSONArray(jarray);
-//		
-//			for(int i = 0; i < js.length(); i++){
-//				jsobject = js.getJSONObject(i);
-//				System.out.println(jsobject.get("id"));
-//				if(jsobject.get("id").equals(43))
-//					System.out.println(j.getJSONObject(i).get("title"));
-//			}
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		String content = "var data = " + jarray + ";";
-//		byte[] contentInBytes = content.getBytes();
-//
-//		fop.write(contentInBytes);
-//		fop.flush();
-//		fop.close();
-
 		cleanDir("videos_client");
 
 	}
