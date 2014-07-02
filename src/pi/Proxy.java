@@ -23,6 +23,7 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 	private Map <String, ArrayList<String>> clientsFiles;
 	private JSONArray json;
 	private String jsonText;
+	private static String serverURL;
 
 	public Proxy() throws RemoteException{
 		super();
@@ -70,7 +71,8 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 			{
 				jsobject = json.getJSONObject(i);
 
-				if(jsobject.get("video") != null || jsobject.get("video") != ""){
+				if(jsobject.get("video") != null || jsobject.get("video") != "")
+				{
 					String[] tmp = dir("videos");
 					boolean found = false;
 					for(int j = 0; j < tmp.length; j++ )
@@ -191,157 +193,194 @@ public class Proxy extends UnicastRemoteObject implements IProxy{
 		}
 	}
 
-	private String stringConverter() throws JSONException, RemoteException, InfoNotFoundException{
+	private byte[] downloadUrl(String toDownload) throws MalformedURLException {
+		
+		URL u = new URL(toDownload);
+	    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-		JSONArray js = json;
-		String result = jsonText;
-		for(int i = 0; i< js.length(); i++){
-			JSONObject j = (JSONObject) js.get(i);
-			if(j.get("video") != null || j.get("video") != ""){
-				String[] dir = dir("videos");
-				for(int x = 0; x< dir.length; x++){
-					String[] split = dir[x].split("\\.(?=[^\\.]+$)");
-					if(split[0].equals(String.valueOf(j.get("id"))))
-						result = result.replace(String.valueOf(j.get("video")), dir[x]);
-				}
-			}
+	    try {
+	        byte[] chunk = new byte[4096];
+	        int bytesRead;
+	        InputStream stream = u.openStream();
+
+	        while ((bytesRead = stream.read(chunk)) > 0) {
+	            outputStream.write(chunk, 0, bytesRead);
+	        }
+
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+
+	    return outputStream.toByteArray();
+	}
+	
+	public boolean pasteFile(String toPath)
+			throws RemoteException, IOException {
+		try{
+			byte[] f = downloadUrl("");
+			File file = new File(basePath, toPath);
+			OutputStream out = new FileOutputStream(file);
+			out.write(f);
+			out.close();
+			return true;
+		} catch(Exception e){
+			System.out.println("Erro na gravacao do ficheiro");
+			return false;
 		}
-		return result;
 	}
 
-	private boolean clientCommunication() throws RemoteException{
-		if(!serversListIP.isEmpty())
-		{
+		private String stringConverter() throws JSONException, RemoteException, InfoNotFoundException{
 
-			Iterator<String> it = serversListIP.keySet().iterator();
-			while(it.hasNext())
+			JSONArray js = json;
+			String result = jsonText;
+			for(int i = 0; i< js.length(); i++){
+				JSONObject j = (JSONObject) js.get(i);
+				if(j.get("video") != null || j.get("video") != ""){
+					String[] dir = dir("videos");
+					for(int x = 0; x< dir.length; x++){
+						String[] split = dir[x].split("\\.(?=[^\\.]+$)");
+						if(split[0].equals(String.valueOf(j.get("id"))))
+							result = result.replace(String.valueOf(j.get("video")), dir[x]);
+					}
+				}
+			}
+			return result;
+		}
+
+		private boolean clientCommunication() throws RemoteException{
+			if(!serversListIP.isEmpty())
 			{
-				String serverName = it.next();
-				String ip = serversListIP.get(serverName);
 
-				ITVClient client;
-				try 
+				Iterator<String> it = serversListIP.keySet().iterator();
+				while(it.hasNext())
 				{
-					client = (ITVClient) Naming.lookup("//" + ip + "/" + serverName);
-					client.receiveJson(stringConverter());
-					String[] tmp = dir("videos");
-					byte[] file;
+					String serverName = it.next();
+					String ip = serversListIP.get(serverName);
 
-					if(clientsFiles.containsKey(serverName))
+					ITVClient client;
+					try 
 					{
-						for(int i = 0; i<tmp.length; i++)
-						{
-							if(!clientsFiles.get(serverName).contains(tmp[i]))
-							{
-								file = copyFile("videos/" + tmp[i]);
-								client.pasteFile(file, "videos_client/" + tmp[i]);
-								clientsFiles.get(serverName).add(tmp[i]);
-							}				
-						}
+						client = (ITVClient) Naming.lookup("//" + ip + "/" + serverName);
+						client.receiveJson(stringConverter(), serverURL);
+						String[] tmp = dir("videos");
+						byte[] file;
 
-						Iterator<String> i = clientsFiles.get(serverName).iterator();
-						ArrayList<String> filesToDel = new ArrayList<String>();
-						boolean found = false;
-						while(i.hasNext())
+						if(clientsFiles.containsKey(serverName))
 						{
-							String arrayFile = i.next();
-							for( int j = 0; j< tmp.length; j++)
+							for(int i = 0; i<tmp.length; i++)
 							{
-								if(arrayFile.equals(tmp[j]))
+								if(!clientsFiles.get(serverName).contains(tmp[i]))
 								{
-									found = true;
+									file = copyFile("videos/" + tmp[i]);
+									client.pasteFile(file, "videos_client/" + tmp[i]);
+									clientsFiles.get(serverName).add(tmp[i]);
+								}				
+							}
+
+							Iterator<String> i = clientsFiles.get(serverName).iterator();
+							ArrayList<String> filesToDel = new ArrayList<String>();
+							boolean found = false;
+							while(i.hasNext())
+							{
+								String arrayFile = i.next();
+								for( int j = 0; j< tmp.length; j++)
+								{
+									if(arrayFile.equals(tmp[j]))
+									{
+										found = true;
+									}
+								}
+
+								if(!found)
+								{
+									client.cleanVideoFromDir(arrayFile);	
+									filesToDel.add(arrayFile);
 								}
 							}
 
-							if(!found)
+							Iterator<String> fToDel = filesToDel.iterator();
+							while(fToDel.hasNext())
 							{
-								client.cleanVideoFromDir(arrayFile);	
-								filesToDel.add(arrayFile);
+								clientsFiles.get(serverName).remove(fToDel.next());
+							}	
+						}
+						else{
+							ArrayList<String> arraylist = new ArrayList<String>();
+							for(int i = 0; i<tmp.length; i++)
+							{
+								file = copyFile("videos/" + tmp[i]);
+								client.pasteFile(file, "videos_client/" + tmp[i]);
+								arraylist.add(tmp[i]);
 							}
+							clientsFiles.put(serverName, arraylist);
 						}
-
-						Iterator<String> fToDel = filesToDel.iterator();
-						while(fToDel.hasNext())
-						{
-							clientsFiles.get(serverName).remove(fToDel.next());
-						}	
-					}
-					else{
-						ArrayList<String> arraylist = new ArrayList<String>();
-						for(int i = 0; i<tmp.length; i++)
-						{
-							file = copyFile("videos/" + tmp[i]);
-							client.pasteFile(file, "videos_client/" + tmp[i]);
-							arraylist.add(tmp[i]);
-						}
-						clientsFiles.put(serverName, arraylist);
-					}
-					return true;
-				} 
-				catch (Exception e) 
-				{
-					e.printStackTrace();
-					return false;
-				} 
-			}
-		}
-		return true;
-
-	}
-
-	public static void main(String[] args) throws Exception {
-
-		if( args.length != 0) {
-			System.out.println("Use: java trab1.Proxy");
-			return;
-		}
-
-
-		System.getProperties().put( "java.security.policy", "pi/policy.all");
-
-		if( System.getSecurityManager() == null) {
-			System.setSecurityManager( new RMISecurityManager());
-		}
-
-		try { // start rmiregistry
-			LocateRegistry.createRegistry( 1099);
-		} catch( RemoteException e) { 
-			// if not start it
-			// do nothing - already started with rmiregistry
-		}
-
-		final Proxy proxy = new Proxy();
-		Naming.rebind("/trabalhoPI", proxy);
-		String ip = InetAddress.getLocalHost().getHostAddress().toString();
-		System.out.println("Proxy running in " + ip + " ...");	
-
-		Timer timer = new Timer();
-		timer.scheduleAtFixedRate(new TimerTask(){
-			public void run(){
-
-				try {
-					System.out.println("-------------------------------------------------------------------");
-					System.out.println("Actualizacao do sistema!");
-					proxy.readJsonFromUrl("http://localhost:3000/contents.json");
-					new Timer().schedule(new TimerTask(){
-						public void run()
-						{
-							try {
-								proxy.clientCommunication();
-							} catch (RemoteException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-						}
-					}, 3000);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+						return true;
+					} 
+					catch (Exception e) 
+					{
+						e.printStackTrace();
+						return false;
+					} 
 				}
 			}
-		}, 0, 1000*60);
+			return true;
+
+		}
+
+		public static void main(String[] args) throws Exception {
+
+			if( args.length != 1) {
+				System.out.println("Use: java trab1.Proxy server");
+				return;
+			}
+
+
+			System.getProperties().put( "java.security.policy", "pi/policy.all");
+
+			if( System.getSecurityManager() == null) {
+				System.setSecurityManager( new RMISecurityManager());
+			}
+
+			try { // start rmiregistry
+				LocateRegistry.createRegistry( 1099);
+			} catch( RemoteException e) { 
+				// if not start it
+				// do nothing - already started with rmiregistry
+			}
+			serverURL = args[0];
+			final Proxy proxy = new Proxy();
+			Naming.rebind("/trabalhoPI", proxy);
+			String ip = InetAddress.getLocalHost().getHostAddress().toString();
+			System.out.println("Proxy running in " + ip + " ...");	
+
+			Timer timer = new Timer();
+			timer.scheduleAtFixedRate(new TimerTask(){
+				public void run(){
+
+					try {
+						System.out.println("-------------------------------------------------------------------");
+						System.out.println("Actualizacao do sistema!");
+						proxy.readJsonFromUrl("http://" + serverURL + ":3000/playlist_items.json");
+						new Timer().schedule(new TimerTask(){
+							public void run()
+							{
+								try {
+									proxy.clientCommunication();
+								} catch (RemoteException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+						}, 3000);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}, 0, 1000*60);
+
+		}
+
 
 	}
-
-
-}

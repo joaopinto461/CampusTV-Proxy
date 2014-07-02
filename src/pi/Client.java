@@ -47,7 +47,7 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 		}		
 	}
 
-	public void receiveJson(String jarray) throws IOException, RemoteException, InfoNotFoundException{
+	public void receiveJson(String jarray, String serverURL) throws IOException, RemoteException, InfoNotFoundException{
 
 		String fName = "data.js";
 		File file = new File(fName);
@@ -57,7 +57,7 @@ public class Client extends UnicastRemoteObject implements ITVClient{
 		Writer out = new BufferedWriter(new OutputStreamWriter(
 			    new FileOutputStream(fName), "UTF-8"));
 			try {
-				String content = "var data = " + jarray + ";" + "\n" + "var server = " + "\"" +  proxyURL + "\"" + ";";
+				String content = "var data = " + jarray + ";" + "\n" + "var server = " + "\"" + "http://" + serverURL +":3000" + "\"" + ";";
 			    out.write(content);
 			} finally {
 			    out.close();
