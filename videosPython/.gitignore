@@ -1,0 +1,12 @@
+MANIFEST
+docs-sphinx/_build/
+*.help
+.tox
+.coverage
+htmlcov/
+dev/
+/dist
+.test
+*.pyc
+.pypi
+__pycache__
